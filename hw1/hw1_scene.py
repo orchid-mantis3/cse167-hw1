@@ -190,8 +190,31 @@ def compose_transformation(transforms):
     F = np.eye(3, dtype=np.float32)
 
     for transform in transforms:
-        pass
         # TODO: your code here
+        for name, params in transform.items():
+            M = np.eye(3, dtype=np.float32)
+            if name == 'scale':
+                M[0,0] = params[0]
+                M[1,1] = params[1]
+            elif name == 'translate':
+                M[0,2] = params[0]
+                M[1,2] = params[1]
+            elif name == 'rotate':
+                angle = math.radians(params[0])
+                c = math.cos(angle)
+                s = math.sin(angle)
+                M[0,0] = c
+                M[0,1] = -s
+                M[1,0] = s
+                M[1,1] = c
+            elif name == 'shear_x':
+                M[0,1] = params[0]
+            elif name == 'shear_y':
+                M[1,0] = params[0]
+            else:
+                raise ValueError(f"{name} is an invalid input")
+        
+            F = M @ F
 
     return F
 
