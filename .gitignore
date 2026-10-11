@@ -5,8 +5,6 @@ __pycache__/
 output.png
 *.log
 
-outputs/
-
 *.fls
 *.aux
 *.fdb_latexmk
