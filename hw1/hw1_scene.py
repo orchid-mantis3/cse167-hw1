@@ -220,9 +220,31 @@ def compose_transformation(transforms):
 
 def interpolate_transformation(transform_keyframes, t):
     # TODO: your code here
-
-    # Should never happen?
-    assert False
+    n = len(transform_keyframes)
+    # for keyframes in n-1 gaps to ensure k+1 is valid
+    for k in range(n - 1):
+        # t = time of keyframe
+        # t >= t0 & t <= t1
+        t0 = transform_keyframes[k]["time"]
+        t1 = transform_keyframes[k + 1]["time"]
+        if t0 <= t <= t1:
+            # calc blend weight
+            w = (t - t0) / (t1 - t0)
+            result = []
+            for pair_a, pair_b in zip(transform_keyframes[k]["transform"], transform_keyframes[k + 1]["transform"]):
+                # access first keyframe's param list
+                for name, params in pair_a.items():
+                    params_b = pair_b[name]
+                    # make list where each item is blended with its correct partner; per transformation
+                    blend = [(1 - w) * a + w * b for a, b in zip(params, params_b)]
+                    # append blend as a dict to result
+                    result.append({name : blend})
+            return result
+    # if t is less than first keyframe's time, return its transform list
+    if t < transform_keyframes[0]["time"]:
+        return transform_keyframes[0]["transform"]
+    else: # return last keyframe's transform list
+        return transform_keyframes[-1]["transform"]
 
 def upload_scene(scene, module, slang_device, t=0.0):
     # Keyframe parameters are interpolated on the CPU;
