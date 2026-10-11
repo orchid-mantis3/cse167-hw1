@@ -1,0 +1,3 @@
+- 1_9 DIY scene can be found in `scenes/hw1/turtle.json` 
+- Can be rendered using `uv run python main.py 1_4 scenes/hw1/turtle.json` 
+- Rendering of 1_9 scene can be found in `outputs/hw_1_9_turtle.png`
