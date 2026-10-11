@@ -53,7 +53,6 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
 
             float2 d = p1 - p0;
             float len = length(d);
-            if (len < 1e-6) continue;
 
             float l = dot(d, q - p0) / len;
             if ((!start || l >= 0) && (!end || l <= len)) {

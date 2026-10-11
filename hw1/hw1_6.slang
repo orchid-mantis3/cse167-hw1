@@ -48,7 +48,6 @@ float3 sample_color(float2 q,
 
                     float2 d = p1 - p0;
                     float len = length(d);
-                    if (len < 1e-6) continue;
 
                     float l = dot(d, p - p0) / len;
                     if ((!start || l >= 0) && (!end || l <= len)) {
