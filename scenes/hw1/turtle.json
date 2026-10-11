@@ -1,0 +1,113 @@
+{
+    "resolution": [800, 500],
+    "background": [0.27, 0.90, 0.87],
+    "objects": [
+        {
+            "_comment": "turtle left eye",
+            "type": "circle",
+            "center": [640, 268],
+            "radius": 7,
+            "fill_rgba": [0.04, 0.20, 0.08, 1.0]
+        },
+        {
+            "_comment": "turtle right eye",
+            "type": "circle",
+            "center": [640, 236],
+            "radius": 7,
+            "fill_rgba": [0.04, 0.20, 0.08, 1.0]
+        },
+        {
+            "_comment": "turtle mouth",
+            "type": "polyline",
+            "closed": false,
+            "points": [654, 270, 666, 252, 654, 234],
+            "stroke_rgba": [0.04, 0.20, 0.08, 1.0],
+            "stroke_width": 4
+        },
+        {
+            "_comment": "turtle head",
+            "type": "circle",
+            "center": [626, 252],
+            "radius": 48,
+            "fill_rgba": [0.13, 0.78, 0.37, 1.0],
+            "stroke_rgba": [0.04, 0.35, 0.15, 1.0],
+            "stroke_width": 7
+        },
+        {
+            "_comment": "turtle shell",
+            "type": "circle",
+            "fill_rgba": [0.13, 0.78, 0.37, 1.0],
+            "stroke_rgba": [0.04, 0.35, 0.15, 1.0],
+            "stroke_width": 0.058,
+            "transform": [
+                {"scale": [153, 112]},
+                {"translate": [460, 252]}
+            ]
+        },
+        {
+            "_comment": "back upper leg",
+            "type": "circle",
+            "fill_rgba": [0.13, 0.78, 0.37, 1.0],
+            "stroke_rgba": [0.04, 0.35, 0.15, 1.0],
+            "stroke_width": 0.15,
+            "transform": [
+                {"rotate": [-12]},
+                {"scale": [76, 25]},
+                {"translate": [342, 330]}
+            ]
+        },
+        {
+            "_comment": "back lower leg",
+            "type": "circle",
+            "fill_rgba": [0.13, 0.78, 0.37, 1.0],
+            "stroke_rgba": [0.04, 0.35, 0.15, 1.0],
+            "stroke_width": 0.15,
+            "transform": [
+                {"rotate": [12]},
+                {"scale": [76, 25]},
+                {"translate": [342, 174]}
+            ]
+        },
+        {
+            "_comment": "front upper leg",
+            "type": "circle",
+            "fill_rgba": [0.13, 0.78, 0.37, 1.0],
+            "stroke_rgba": [0.04, 0.35, 0.15, 1.0],
+            "stroke_width": 0.15,
+            "transform": [
+                {"rotate": [12]},
+                {"scale": [76, 25]},
+                {"translate": [578, 330]}
+            ]
+        },
+        {
+            "_comment": "front lower leg",
+            "type": "circle",
+            "fill_rgba": [0.13, 0.78, 0.37, 1.0],
+            "stroke_rgba": [0.04, 0.35, 0.15, 1.0],
+            "stroke_width": 0.15,
+            "transform": [
+                {"rotate": [-12]},
+                {"scale": [76, 25]},
+                {"translate": [578, 174]}
+            ]
+        },
+        {
+            "_comment": "beach/sand background on the left",
+            "type": "polyline",
+            "closed": true,
+            "points": [
+                0, 0,
+                310, 0,
+                375, 90,
+                345, 185,
+                322, 285,
+                350, 385,
+                315, 470,
+                280, 500,
+                0, 500
+            ],
+            "fill_rgba": [1.0, 0.94, 0.69, 1.0]
+        }
+    ]
+}
