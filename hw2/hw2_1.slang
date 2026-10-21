@@ -14,8 +14,6 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
         return;
     }
 
-    // TODO: HW 2.1
-
     // edges
     float2 e01 = sp1 - sp0;
     float2 e12 = sp2 - sp1;
