@@ -189,6 +189,69 @@ def compose_transformations(transformations):
     for transform in transformations:
         pass
         # HW 2.3 TODO: your code here
+        for name, params in transform.items():
+                    M = np.eye(4, dtype=np.float32)
+                    if name == 'scale':
+                        M[0,0] = params[0]
+                        M[1,1] = params[1]
+                        M[2,2] = params[2]
+                    elif name == 'translate':
+                        M[0,3] = params[0]
+                        M[1,3] = params[1]
+                        M[2,3] = params[2]
+                    # euler angles
+                    elif name == 'rotate_x':
+                        angle = math.radians(params[0])
+                        c = math.cos(angle)
+                        s = math.sin(angle)
+                        M[1,1] = c
+                        M[2,1] = s
+                        M[1,2] = -s
+                        M[2,2] = c
+                    elif name == 'rotate_y':
+                        angle = math.radians(params[0])
+                        c = math.cos(angle)
+                        s = math.sin(angle)
+                        M[0,0] = c
+                        M[2,0] = -s
+                        M[0,2] = s
+                        M[2,2] = c
+                    elif name == 'rotate_z':
+                        angle = math.radians(params[0])
+                        c = math.cos(angle)
+                        s = math.sin(angle)
+                        M[0,0] = c
+                        M[1,0] = s
+                        M[0,1] = -s
+                        M[1,1] = c
+                    elif name == 'lookat':
+                        p = np.array(params['position'], dtype=np.float32)
+                        t = np.array(params['target'], dtype=np.float32)
+                        u = np.array(params['up'], dtype=np.float32)
+                        # direction d: normalize vector len. and make it 
+                        # len-1 vector of the x,y,z
+                        # div to purely get the dir out of these vars
+                        v = t - p
+                        d = v / np.linalg.norm(v)
+                        # right vector r: normalize cross prd and make it a 
+                        # len-1 vector of the x,y,z
+                        r = np.cross(d, u)
+                        r = r / np.linalg.norm(r)
+                        # recompute up vector u using cross prd betw. right
+                        # vector and camera dir. --> u'
+                        # since r & d are now unit len & perpen. r x d auto 
+                        # len 1
+                        u_prime = np.cross(r, d)
+
+                        # write into M
+                        M[:3, 0] = r
+                        M[:3, 1] = u_prime
+                        M[:3, 2] = -d
+                        M[:3, 3] = p 
+                    else:
+                        raise ValueError(f"{name} is an invalid input")
+                
+                    F = M @ F
 
     return F
 
