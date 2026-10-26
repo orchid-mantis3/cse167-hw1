@@ -1,0 +1,3 @@
+- Custom Scene: `scenes/apple_scene.json`
+- Render with `uv run python main.py 2_7 scenes/hw2/apple_scene.json`
+- 3D model files credits: Oliver Harries https://polyhaven.com/a/food_apple_01
