@@ -25,6 +25,7 @@ float3 sample_color(float2 q,
 
             // create blend so that the color of the layers blend with the one behind it since they're all semi-transparent
             if (shape.use_fill && d <= c.radius) {
+                        // 1 - w * a + w * b
                 color = (1 - shape.fill_rgba.w) * color + shape.fill_rgba.w * shape.fill_rgba.rgb;
             }
             if (shape.use_stroke && (abs(d - c.radius) <= shape.stroke_width * 0.5)) {
@@ -49,6 +50,7 @@ float3 sample_color(float2 q,
 
                     float2 d = p1 - p0;
                     float len = length(d);
+                    if (len < 1e-6) continue;
 
                     float l = dot(d, p - p0) / len;
                     if ((!start || l >= 0) && (!end || l <= len)) {

@@ -29,84 +29,98 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
     }
 
     // TODO: your code here
+    image[tid] = float4(background, 1.0);
+    float2 start_pt,end_pt,pixel;
+    pixel = float2(tid);
+    pixel.x += 0.5;
+    // fix y-orientation
+    pixel.y = float(height) - 1 - pixel.y + 0.5;
 
-    float2 q = float2(tid.x + 0.5, (float)height - (tid.y + 0.5));
-    float3 color = background;
-    
-    for (int s = 0; s < num_shapes; s++) { // index 0 is the front-most shape; for each pixel go front to back and the first shape that covers the pixel claims it
-        Shape shape = shapes[s];
-        float2 p = to_obj_space(q, shape.world_to_obj);
-        bool hit = false;
-
-        if (shape.type == ShapeType::Circle) {
-            Circle c = circles[shape.index];
-            float d = length(p - c.center);
-
-            // test stroke first because stroke's inner half overlaps with fill region, so stroke should draw on top 
-            if (shape.use_stroke && (abs(d - c.radius) <= shape.stroke_width * 0.5)) {
-                // |d-r| <= w/2 selects the ring of points whose distance from center is within w/2 of the radius
-                color = shape.stroke_rgba.rgb;
-                hit = true;
-            } else if (shape.use_fill && d <= c.radius) {  // point is inside a circle if its distance to the center is at most the radius
-                color = shape.fill_rgba.rgb;
-                hit = true;
+    for (int i = num_shapes - 1; i >= 0; i--) {
+        Shape curr_shape = shapes[i];
+        if (shapes[i].type == ShapeType.Circle) {
+            Circle circ = circles[curr_shape.index];
+            float dist_to_center = length(pixel - circ.center);
+            // if filled and in bounds color shape
+            if (curr_shape.use_fill && dist_to_center <= circ.radius) {
+                image[tid] = curr_shape.fill_rgba;
             }
+            // test if using stroke and within bounds of edge
+            if (curr_shape.use_stroke && (abs(dist_to_center - circ.radius) <= (curr_shape.stroke_width / 2.0))) {
+                    image[tid] = curr_shape.stroke_rgba;
+            }
+        } else if (shapes[i].type == ShapeType.Polyline) {
+            Polyline polyline = polylines[curr_shape.index];
+            int ctr = 0, next, num_pts = polyline.pts_end - polyline.pts_begin;
 
-        } else if (shape.type == ShapeType::Polyline) {
-            Polyline pl = polylines[shape.index];
-            int n = pl.pts_end - pl.pts_begin; // get number of points in polyline
+            // if polyline is closed fill it
+            if (polyline.closed){
+                for (int j = polyline.pts_begin; j < polyline.pts_end; j++) {
+                    next = polyline.pts_begin + ((j - polyline.pts_begin + 1) % num_pts);
+                    start_pt = points[j];
+                    end_pt = points[next];
 
-            // stroke test using same algorithm as 1.2
-            if (shape.use_stroke) {
-                int num_segments = pl.closed ? n : n - 1; // since closed polyline has one extra edge
-                for (int i = 0; i < num_segments; i++) {
-                    float2 p0 = points[pl.pts_begin + i];
-                    float2 p1 = points[pl.pts_begin + (i + 1) % n];
-
-                    bool start = (!pl.closed && i == 0);
-                    bool end = (!pl.closed && i == (num_segments - 1));
-
-                    float2 d = p1 - p0;
-                    float len = length(d);
-
-                    float l = dot(d, p - p0) / len;
-                    if ((!start || l >= 0) && (!end || l <= len)) {
-                        float t = clamp(l, 0.0, len);
-                        float2 q_prime = p0 + (d / len) * t;
-                        if (length(p - q_prime) <= shape.stroke_width * 0.5) {
-                            color = shape.stroke_rgba.rgb;
-                            hit = true;
-                            break;
+                    // verify if edge crosses through pixel's ray, as in above or below
+                    if ((start_pt.y > pixel.y) != (end_pt.y > pixel.y)) {
+                        // where edge reaches pixel.y
+                        float t = (pixel.y - start_pt.y) / (end_pt.y - start_pt.y);
+                                                            //portion of distance traveled so far via start_pt.x
+                        float cross_x = start_pt.x  + (t * (end_pt.x - start_pt.x));
+                        if (cross_x > pixel.x) {
+                            // edge dir; ++ for upward dir and -- for downward dir
+                            if (end_pt.y > start_pt.y) {
+                                ctr++;
+                            } else {
+                                ctr--;
+                            }
                         }
                     }
                 }
+                // non-zero rule
+                if (ctr != 0 && curr_shape.use_fill && polyline.closed) {
+                    image[tid] = curr_shape.fill_rgba;
+                }
             }
+            // deals with strokes
+            if (curr_shape.use_stroke) {
+                float2 seg_vector, start_to_px;
+                int num_segments;
+                bool is_on_stroke = false;
+                // -1 segment if its open since its not connecting to the start
+                if (polyline.closed) {
+                    num_segments = num_pts;
+                } else {
+                    num_segments = num_pts - 1;
+                }
+                // k = segment index; iter thru to determine how to draw strokes
+                for (int k = polyline.pts_begin; k < polyline.pts_begin + num_segments; k++) {
+                    // so it wraps prop.
+                    next = polyline.pts_begin + ((k - polyline.pts_begin + 1) % num_pts);
+                    start_pt = points[k];
+                    end_pt = points[next];                
+                    seg_vector = end_pt - start_pt;
+                    start_to_px = pixel - start_pt;
+                    // coord on segment axis; how much start_to_px vector points along segment w/o segment length scaling
+                    float proj_frac = (dot(start_to_px, seg_vector) / dot(seg_vector, seg_vector));
+                    
+                    // flat cap checks
+                    bool beyond_start = !polyline.closed && (k == polyline.pts_begin) && proj_frac < 0.0;
+                    bool beyond_end = !polyline.closed && (k == polyline.pts_begin + num_segments - 1) && proj_frac > 1.0;
 
-            // fill test; same as 1.2
-            if (!hit && shape.use_fill && pl.closed) {
-                int count = 0;
-                for (int i = 0; i < n; i++) {
-                    float2 p0 = points[pl.pts_begin + i];
-                    float2 p1 = points[pl.pts_begin + (i + 1) % n];
-                    bool is_upward = p1.y > p0.y;
-                    bool crosses = (p0.y <= p.y && p1.y > p.y) || (p1.y <= p.y && p0.y > p.y);
-                    if (crosses) {
-                        float t = (p.y - p0.y) / (p1.y - p0.y);
-                        float x_cross = p0.x + t * (p1.x - p0.x);
-                        if (x_cross > p.x) {
-                            count += is_upward ? 1 : -1;
+                    if (!(beyond_end || beyond_start)) {
+                        // constrains to [0,1] so we get closest landing pt of projection
+                        float proj_frac_clamped = clamp(proj_frac, 0.0, 1.0);
+                        float2 closest_pt = start_pt + (proj_frac_clamped *seg_vector);
+                        float dist_to_seg = length(pixel - closest_pt);
+                        if (dist_to_seg < curr_shape.stroke_width / 2) {
+                            is_on_stroke = true;
                         }
                     }
                 }
-                if (count != 0) {
-                    color = shape.fill_rgba.rgb;
-                    hit = true;
+                if (is_on_stroke) {
+                    image[tid] = curr_shape.stroke_rgba;
                 }
             }
         }
-
-        if (hit) break;   // nothing behind a claimed pixel can show, so if pixel is already claimed, exit loop
     }
-
-    image[tid] = float4(color, 1.0);
 }

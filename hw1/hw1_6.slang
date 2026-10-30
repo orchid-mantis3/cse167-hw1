@@ -6,7 +6,6 @@ float2 to_obj_space(float2 q, float3x3 world_to_obj) {
 }
 
 // returns the color at world-space sample point q, given scene data
-// checks the scene at one sample point
 float3 sample_color(float2 q,
                     float3 background,
                     StructuredBuffer<Shape> shapes,
@@ -14,21 +13,21 @@ float3 sample_color(float2 q,
                     StructuredBuffer<Circle> circles,
                     StructuredBuffer<Polyline> polylines,
                     StructuredBuffer<float2> points) {
-    float3 color = background; // start with the background
+    float3 color = background;
 
-    for (int s = 0; s < num_shapes; s++) { // loops through the shapes
+    for (int s = 0; s < num_shapes; s++) {
         Shape shape = shapes[s];
-        float2 p = to_obj_space(q, shape.world_to_obj); // each shape has a transform, so world-space sample point q gets converted into that shape's obj space
+        float2 p = to_obj_space(q, shape.world_to_obj);
         bool hit = false;
 
         if (shape.type == ShapeType::Circle) {
             Circle c = circles[shape.index];
-            float d = length(p - c.center); // distance from sample point to circle center
+            float d = length(p - c.center);
 
-            if (shape.use_stroke && (abs(d - c.radius) <= shape.stroke_width * 0.5)) { // is point close enough to circle boundary stroke
+            if (shape.use_stroke && (abs(d - c.radius) <= shape.stroke_width * 0.5)) {
                 color = shape.stroke_rgba.rgb;
                 hit = true;
-            } else if (shape.use_fill && d <= c.radius) { // is point inside the circle
+            } else if (shape.use_fill && d <= c.radius) {
                 color = shape.fill_rgba.rgb;
                 hit = true;
             }
@@ -37,7 +36,7 @@ float3 sample_color(float2 q,
             Polyline pl = polylines[shape.index];
             int n = pl.pts_end - pl.pts_begin;
 
-            // stroke test: project sample point onto the segment, clamp to the segment, then check distance against half the stroke width
+            // stroke test
             if (shape.use_stroke) {
                 int num_segments = pl.closed ? n : n - 1;
                 for (int i = 0; i < num_segments; i++) {
@@ -49,6 +48,7 @@ float3 sample_color(float2 q,
 
                     float2 d = p1 - p0;
                     float len = length(d);
+                    if (len < 1e-6) continue;
 
                     float l = dot(d, p - p0) / len;
                     if ((!start || l >= 0) && (!end || l <= len)) {
@@ -118,8 +118,8 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
             float2 q = float2(
                 float(tid.x) + (float(i) + 0.5) / float(samples_per_axis),
                 float(height) - float(tid.y) - (float(j) + 0.5) / float(samples_per_axis)
-            ); // places each sample at the center of a subpixel
-            color_sum += sample_color(q, background, shapes, num_shapes, circles, polylines, points); // each subpixel gets a color
+            );
+            color_sum += sample_color(q, background, shapes, num_shapes, circles, polylines, points);
         }
     }
 
